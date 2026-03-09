@@ -102,11 +102,15 @@ class TimesFM_2p5_200M_torch_module(nn.Module):
 
     output_embeddings = input_embeddings
     new_decode_caches = []
+    hidden_states = []  # Collect hidden states from all layers
+
     for i, layer in enumerate(self.stacked_xf):
       output_embeddings, new_cache = layer(
         output_embeddings, masks[..., -1], decode_caches[i]
       )
       new_decode_caches.append(new_cache)
+      hidden_states.append(output_embeddings)  # Store hidden state
+
     output_ts = self.output_projection_point(output_embeddings)
     output_quantile_spread = self.output_projection_quantiles(output_embeddings)
 
@@ -115,6 +119,7 @@ class TimesFM_2p5_200M_torch_module(nn.Module):
       output_embeddings,
       output_ts,
       output_quantile_spread,
+      hidden_states,  # Return hidden states
     ), new_decode_caches
 
   def decode(self, horizon: int, inputs, masks):
